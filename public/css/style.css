@@ -1,0 +1,328 @@
+/* WinNest — Pigeon Pairing & Performance Tracker
+   Design concept: a fancier's ledger book — warm, paper-toned, hairline rules,
+   editorial serif for headlines, clean tabular sans for data. */
+ 
+   @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,450;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap');
+ 
+   :root {
+     --bg: #f6f3ec;
+     --surface: #ffffff;
+     --ink: #23303d;
+     --ink-soft: #5c6b78;
+     --loft: #4a3527;
+     --loft-dark: #302015;
+     --sky: #2d6f9e;
+     --sky-deep: #1a3f5c;
+     --copper: #94702a;
+     --gold: #b6892a;
+     --silver: #7d7d7d;
+     --bronze: #96552c;
+     --line: #e4ddcf;
+     --row-alt: #faf8f2;
+     --radius: 5px;
+     --container: 920px;
+   }
+    
+   * { box-sizing: border-box; }
+    
+   html { scroll-behavior: smooth; }
+    
+   body {
+     margin: 0;
+     background: var(--bg);
+     color: var(--ink);
+     font-family: 'Inter', Arial, sans-serif;
+     font-variant-numeric: tabular-nums;
+     line-height: 1.5;
+   }
+    
+   h1, h2, h3 {
+     font-family: 'Fraunces', Georgia, serif;
+     font-weight: 600;
+     margin: 0;
+     color: var(--ink);
+   }
+    
+   a { color: var(--sky-deep); }
+   a:focus-visible, button:focus-visible, select:focus-visible {
+     outline: 3px solid var(--copper);
+     outline-offset: 2px;
+   }
+    
+   .container {
+     max-width: var(--container);
+     margin: 0 auto;
+     padding: 0 24px;
+   }
+    
+   /* ---- Header / Nav ---- */
+   .site-header {
+     background: var(--surface);
+     border-bottom: 1px solid var(--line);
+     position: sticky;
+     top: 0;
+     z-index: 10;
+   }
+   .site-header .container {
+     display: flex;
+     align-items: center;
+     justify-content: space-between;
+     gap: 20px;
+     padding-top: 14px;
+     padding-bottom: 14px;
+     flex-wrap: wrap;
+   }
+   .brand {
+     display: flex;
+     align-items: center;
+     gap: 10px;
+     text-decoration: none;
+     color: var(--ink);
+   }
+   .brand img { display: block; }
+   .brand span {
+     font-family: 'Fraunces', Georgia, serif;
+     font-weight: 600;
+     font-size: 22px;
+     letter-spacing: 0.2px;
+   }
+   .nav-links {
+     display: flex;
+     gap: 28px;
+     flex-wrap: wrap;
+   }
+   .nav-links a {
+     text-decoration: none;
+     color: var(--ink-soft);
+     font-size: 15px;
+     font-weight: 500;
+     padding-bottom: 4px;
+     border-bottom: 2px solid transparent;
+   }
+   .nav-links a:hover { color: var(--ink); }
+   .nav-links a[aria-current="page"] {
+     color: var(--copper);
+     border-bottom-color: var(--copper);
+   }
+    
+   /* ---- Hero ---- */
+   .hero {
+     background: linear-gradient(160deg, var(--sky-deep), var(--sky) 130%);
+     color: #f4f1ea;
+     padding: 56px 0;
+   }
+   .hero .container { max-width: 760px; }
+   .hero h1 {
+     color: #ffffff;
+     font-size: clamp(30px, 4vw, 42px);
+     line-height: 1.15;
+   }
+   .hero p {
+     margin: 14px 0 0 0;
+     font-size: 17px;
+     color: #dfe8ee;
+     max-width: 52ch;
+   }
+   .hero .stats {
+     display: flex;
+     gap: 36px;
+     margin-top: 28px;
+     flex-wrap: wrap;
+   }
+   .hero .stat .num {
+     font-family: 'Fraunces', Georgia, serif;
+     font-size: 28px;
+     font-weight: 600;
+     color: #ffffff;
+     display: block;
+   }
+   .hero .stat .label {
+     font-size: 13px;
+     color: #b9c9d4;
+   }
+   .btn {
+     display: inline-block;
+     margin-top: 26px;
+     background: var(--copper);
+     color: #fff;
+     text-decoration: none;
+     font-weight: 600;
+     font-size: 15px;
+     padding: 11px 24px;
+     border-radius: var(--radius);
+     border: none;
+     cursor: pointer;
+     font-family: inherit;
+   }
+   .btn:hover { background: #7d5e22; }
+    
+   /* ---- Sections ---- */
+   .section {
+     padding: 44px 0;
+   }
+   .section h2 {
+     font-size: 24px;
+   }
+   .section-head {
+     display: flex;
+     align-items: baseline;
+     justify-content: space-between;
+     gap: 16px;
+     border-bottom: 1px solid var(--copper);
+     padding-bottom: 10px;
+     margin-bottom: 22px;
+     flex-wrap: wrap;
+   }
+   .section-head p {
+     margin: 0;
+     color: var(--ink-soft);
+     font-size: 14px;
+   }
+    
+   /* ---- Tables (the ledger) ---- */
+   .ledger {
+     width: 100%;
+     border-collapse: collapse;
+     background: var(--surface);
+     font-size: 15px;
+   }
+   .ledger caption { display: none; }
+   .ledger thead th {
+     background: var(--loft);
+     color: #f4ede3;
+     text-align: left;
+     font-weight: 600;
+     font-size: 13.5px;
+     padding: 12px 14px;
+   }
+   .ledger thead th.num, .ledger td.num { text-align: right; }
+   .ledger thead th.center, .ledger td.center { text-align: center; }
+   .ledger tbody td {
+     padding: 12px 14px;
+     border-bottom: 1px solid var(--line);
+   }
+   .ledger tbody tr:nth-child(even) { background: var(--row-alt); }
+   .ledger tbody tr:hover { background: #f1e9d8; }
+   .ledger a { text-decoration: none; font-weight: 600; }
+   .ledger a:hover { text-decoration: underline; }
+    
+   .rank {
+     display: inline-flex;
+     align-items: center;
+     justify-content: center;
+     width: 26px;
+     height: 26px;
+     border-radius: 50%;
+     border: 2px solid var(--line);
+     font-weight: 700;
+     font-size: 13px;
+   }
+   .rank.gold { border-color: var(--gold); color: var(--gold); }
+   .rank.silver { border-color: var(--silver); color: var(--silver); }
+   .rank.bronze { border-color: var(--bronze); color: var(--bronze); }
+    
+   .pts { font-weight: 700; color: var(--ink); }
+    
+   /* ---- Forms ---- */
+   .control-panel {
+     background: var(--surface);
+     border: 1px solid var(--line);
+     border-radius: var(--radius);
+     padding: 20px 22px;
+     margin-bottom: 30px;
+   }
+   .control-panel label {
+     display: block;
+     font-weight: 600;
+     font-size: 14px;
+     margin-bottom: 8px;
+   }
+   .control-row {
+     display: flex;
+     gap: 12px;
+     flex-wrap: wrap;
+   }
+   select {
+     flex: 1 1 320px;
+     padding: 10px 12px;
+     border: 1px solid #c9c1b0;
+     border-radius: var(--radius);
+     font-size: 15px;
+     font-family: inherit;
+     background: #fff;
+     color: var(--ink);
+   }
+   .control-panel button {
+     background: var(--sky-deep);
+     color: #fff;
+     border: none;
+     padding: 10px 22px;
+     border-radius: var(--radius);
+     font-size: 15px;
+     font-weight: 600;
+     cursor: pointer;
+     font-family: inherit;
+   }
+   .control-panel button:hover { background: var(--sky); }
+    
+   .meta-line {
+     color: var(--ink-soft);
+     font-size: 14px;
+     margin: -8px 0 18px 0;
+   }
+    
+   /* ---- Profile card ---- */
+   .profile {
+     background: var(--surface);
+     border: 1px solid var(--line);
+     border-radius: var(--radius);
+     overflow: hidden;
+   }
+   .profile dl {
+     margin: 0;
+     display: grid;
+     grid-template-columns: 220px 1fr;
+   }
+   .profile dt {
+     background: #f1ece1;
+     font-weight: 600;
+     padding: 13px 16px;
+     border-bottom: 1px solid var(--line);
+   }
+   .profile dd {
+     margin: 0;
+     padding: 13px 16px;
+     border-bottom: 1px solid var(--line);
+   }
+   .profile dt:last-of-type, .profile dd:last-of-type { border-bottom: none; }
+    
+   .pill {
+     font-weight: 700;
+     color: var(--gold);
+   }
+    
+   /* ---- Footer ---- */
+   .site-footer {
+     background: var(--loft-dark);
+     color: #cfc4b6;
+     text-align: center;
+     padding: 28px 0;
+     margin-top: 40px;
+     font-size: 14px;
+   }
+    
+   /* ---- Responsive ---- */
+   @media (max-width: 680px) {
+     .nav-links { gap: 16px; font-size: 14px; }
+     .hero { padding: 40px 0; }
+     .profile dl { grid-template-columns: 1fr; }
+     .profile dt { border-bottom: none; padding-bottom: 4px; }
+     .profile dd { padding-top: 4px; }
+     .ledger { font-size: 13.5px; }
+     .ledger thead th, .ledger tbody td { padding: 9px 8px; }
+   }
+    
+   @media (prefers-reduced-motion: reduce) {
+     html { scroll-behavior: auto; }
+     * { transition: none !important; }
+   }

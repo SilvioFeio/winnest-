@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('pigeon_id')->constrained()->cascadeOnDelete();
             $table->foreignId('race_stage_id')->constrained()->cascadeOnDelete();
-            $table->unsignedInteger('psoition');
+            $table->unsignedInteger('position');
             $table->timestamps();
 
             $table->unique(['pigeon_id', 'race_stage_id']);

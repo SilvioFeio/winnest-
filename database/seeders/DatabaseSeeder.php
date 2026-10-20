@@ -15,13 +15,6 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // Login account for the client
-        User::create([
-            'name' => 'Gerard Koopman',
-            'email' => 'gerard@example.com',
-            'password' => 'password',
-        ]);
-
         // Create two races
         $thailand = Race::create(['name' => 'Thailand One Loft', 'country' => 'Thailand', 'season' => 2026]);
         $portugal = Race::create(['name' => 'Portugal Golden Race', 'country' => 'Portugal', 'season' => 2026]);

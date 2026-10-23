@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('pigeons', function (Blueprint $table) {
             $table->id();
             $table->string('ring_number')->unique();
-            $table->enum('sex' ,['cock', 'hen']);
+            $table->enum('sex' ,['cock', 'hen', 'unknown']);
             $table->string('colour')->nullable();
             $table->foreignId('parent_pair_id')->nullable()->constrained('pairs')->nullOnDelete();
             $table->enum('status',['alive','lost'])->default('alive');

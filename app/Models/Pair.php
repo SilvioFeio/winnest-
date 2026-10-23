@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Pair extends Model
 {
-    protected $fillable = ['cook_id', 'hen_id', 'season'];
+    protected $fillable = ['cock_id', 'hen_id', 'season'];
 
     public function cock() {
         return $this->belongsTo(Pigeon::class, 'cock_id');

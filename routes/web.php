@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\PageController;
 use App\Services\PairRanking;
 use Illuminate\Support\Facades\Route;
  
@@ -11,5 +12,5 @@ Route::get('/rankings', function () {
     return view('rankings', ['ranking' => $ranking]);
 })->name('rankings');
 
-Route::view('/results', 'results')->name('results');
-Route::view('/pairs', 'pairs')->name('pairs');
+Route::get('/results', [PageController::class, 'results'])->name('results');
+Route::get('/pairs', [PageController::class, 'pairs'])->name('pairs');

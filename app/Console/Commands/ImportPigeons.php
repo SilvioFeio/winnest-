@@ -10,6 +10,7 @@ use App\Models\Result;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
+// php artisan import:pigeons — reads the CSVs in database/data and creates races, pigeons, pairs and results
 class ImportPigeons extends Command
 {
     protected $signature = 'import:pigeons
@@ -24,6 +25,7 @@ class ImportPigeons extends Command
     /** How many rows were newly created per table. */
     private array $created = ['parents' => 0, 'youngsters' => 0, 'pairs' => 0, 'races' => 0, 'stages' => 0, 'results' => 0];
 
+    // Checks the files, reads them, then imports everything in one transaction (all or nothing)
     public function handle(): int
     {
         $dir = base_path($this->option('path'));
@@ -69,6 +71,7 @@ class ImportPigeons extends Command
         return self::SUCCESS;
     }
 
+    // One race per name + season; existing races are left as they are
     private function importRaces(array $rows): void
     {
         foreach ($rows as $row) {
@@ -80,6 +83,7 @@ class ImportPigeons extends Command
         }
     }
 
+    // Each entry row = a youngster plus its father and mother; the parents become a pair for the season
     private function importEntries(array $rows, array $parentColours, int $season): void
     {
         $seen = [];
@@ -115,23 +119,25 @@ class ImportPigeons extends Command
                 $sex = 'unknown';
             }
 
+            // Status is left out on purpose: new pigeons default to 'alive', and a re-import must not undo 'lost'
             $pigeon = Pigeon::updateOrCreate(
                 ['ring_number' => $ring],
                 [
                     'sex' => $sex,
                     'colour' => trim($row['colour']) ?: null,
                     'parent_pair_id' => $pair->id,
-                    'status' => 'alive',
                 ]
             );
             $this->created['youngsters'] += $pigeon->wasRecentlyCreated ? 1 : 0;
         }
     }
 
+    // Each result row = one placing; rows with an unknown pigeon, race, stage type or impossible position are skipped
     private function importResults(array $rows): void
     {
         foreach ($rows as $row) {
             $ring = $this->ring($row['ring_number']);
+            $type = strtolower(trim($row['stage_type']));
             $pigeon = Pigeon::where('ring_number', $ring)->first();
             $race = Race::where('name', trim($row['race']))->first();
 
@@ -143,7 +149,7 @@ class ImportPigeons extends Command
                 $this->warnings[] = "Result skipped for $ring: race '{$row['race']}' is not in races.csv.";
                 continue;
             }
-            if (!in_array($row['stage_type'], ['training', 'hotspot', 'final'], true)) {
+            if (!in_array($type, ['training', 'hotspot', 'final'], true)) {
                 $this->warnings[] = "Result skipped for $ring: unknown stage type '{$row['stage_type']}'.";
                 continue;
             }
@@ -153,7 +159,7 @@ class ImportPigeons extends Command
             }
 
             $stage = RaceStage::firstOrCreate(
-                ['race_id' => $race->id, 'stage_type' => $row['stage_type'], 'name' => trim($row['stage_name'])],
+                ['race_id' => $race->id, 'stage_type' => $type, 'name' => trim($row['stage_name'])],
                 ['participants' => (int) $row['participants']]
             );
             $this->created['stages'] += $stage->wasRecentlyCreated ? 1 : 0;
@@ -189,17 +195,17 @@ class ImportPigeons extends Command
         return $pigeon;
     }
 
-    /** Remove a country prefix: "NL 24-8077898" and "24-8077898" become the same ring. */
+    /** Same ring format everywhere ("NL 24-8077898" becomes "24-8077898"); see Pigeon::normaliseRing. */
     private function ring(string $ring): string
     {
-        return preg_replace('/^[A-Za-z]{1,3}\s+/', '', trim($ring));
+        return Pigeon::normaliseRing($ring);
     }
 
     /** Read a CSV file with a header row; returns null if a required column is missing. */
     private function readCsv(string $path, array $required): ?array
     {
         $handle = fopen($path, 'r');
-        $header = fgetcsv($handle);
+        $header = fgetcsv($handle, escape: '');
         $header = $header ? array_map(fn ($h) => trim(ltrim($h, "\xEF\xBB\xBF")), $header) : [];
 
         $missing = array_diff($required, $header);
@@ -210,7 +216,7 @@ class ImportPigeons extends Command
         }
 
         $rows = [];
-        while (($data = fgetcsv($handle)) !== false) {
+        while (($data = fgetcsv($handle, escape: '')) !== false) {
             if ($data === [null] || count(array_filter($data, fn ($v) => $v !== null && $v !== '')) === 0) {
                 continue;
             }

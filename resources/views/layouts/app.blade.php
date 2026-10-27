@@ -1,3 +1,4 @@
+{{-- Shared page shell: pages fill @section('title'), 'hero' and 'content'; aria-current marks the active nav link --}}
 <!DOCTYPE html>
 <html lang="en">
 <head>

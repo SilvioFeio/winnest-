@@ -12,6 +12,7 @@
 @endsection
  
 @section('content')
+  {{-- Top: pick a pair (?pair=ID) and see its profile and youngsters; bottom: every youngster with its parents --}}
   @if (count($ranking) === 0)
     <p class="meta-line">No pairs have been imported yet. Run <code>php artisan import:pigeons</code>.</p>
   @else
@@ -116,7 +117,7 @@
             </td>
             <td>{{ $young->sex }}</td>
             <td>{{ $young->colour }}</td>
-            <td class="center">20{{ substr($young->ring_number, 0, 2) }}</td>
+            <td class="center">{{ $young->hatchYear() ?? '—' }}</td>
             <td class="center">{{ $young->results_count }}</td>
           </tr>
         @endforeach

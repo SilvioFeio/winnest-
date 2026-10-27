@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Pair;
 
+// Scores every breeding pair from 0 to 1: a weighted mix of race performance, fertility and survival
 class PairRanking {
     // How important each part is (must add up to 1)
     public $weights = [
@@ -13,7 +14,7 @@ class PairRanking {
     ];
 
     // How much each stage type counts
-    Public $stageWeights = [
+    public $stageWeights = [
         'training' => 1,
         'hotspot' => 2,
         'final' => 3
@@ -22,6 +23,7 @@ class PairRanking {
     // Pairs with fewer youngsters than this get a warning
     public $minYoungsters = 2;
 
+    // Loads all pairs with everything needed in one go, scores each one and sorts best first
     public function rank() {
         $pairs = Pair::with(['cock','hen','fertilityRecord', 'youngsters.results.stage'])->get();
 
@@ -55,7 +57,7 @@ class PairRanking {
 
         return $ranking;
     }
-     // Average result score of all youngsters, finals count more
+    // Average result score of all youngsters, finals count more (1st place = 1.0, last place close to 0)
     private function performance($pair)
     {
         $scoreTotal  = 0;
@@ -64,6 +66,9 @@ class PairRanking {
         foreach ($pair->youngsters as $youngster) {
             foreach ($youngster->results as $result) {
                 $participants = $result->stage->participants;
+                if ($participants < 1) {
+                    continue; // a stage without a participant count cannot be scored
+                }
                 $score  = ($participants - $result->position + 1) / $participants;
                 $weight = $this->stageWeights[$result->stage->stage_type];
 
@@ -105,4 +110,3 @@ class PairRanking {
         return $alive / $all;
     }
 }
-?>

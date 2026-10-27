@@ -9,8 +9,39 @@ use App\Models\Result;
 use App\Services\PairRanking;
 use Illuminate\Http\Request;
 
+// Builds the data for every page; the views only display it
 class PageController extends Controller
 {
+    /** Home page: live totals plus every race with our best youngster in its final. */
+    public function home()
+    {
+        $races = Race::withCount('stages')->orderByDesc('season')->orderBy('name')->get();
+
+        // Best (lowest) final position per race, keyed by race id
+        $bestFinals = Result::with(['pigeon', 'stage'])
+            ->whereHas('stage', fn ($q) => $q->where('stage_type', 'final'))
+            ->orderBy('position')
+            ->get()
+            ->unique(fn ($r) => $r->stage->race_id)
+            ->keyBy(fn ($r) => $r->stage->race_id);
+
+        return view('home', [
+            'races' => $races,
+            'bestFinals' => $bestFinals,
+            'pairCount' => Pair::count(),
+            'youngsterCount' => Pigeon::whereNotNull('parent_pair_id')->count(),
+        ]);
+    }
+
+    /** Pair Rankings page: every pair with its score breakdown, best first. */
+    public function rankings()
+    {
+        $ranking = (new PairRanking)->rank();
+        $season = collect($ranking)->max('season');
+
+        return view('rankings', compact('ranking', 'season'));
+    }
+
     /** Race Results page: results of one race, straight from the database. */
     public function results(Request $request)
     {
@@ -19,14 +50,19 @@ class PageController extends Controller
 
         $results = collect();
         if ($race) {
+            // Finals first, then stages in natural order ("Hot Spot 2" before "Hot Spot 10"), then by position
             $results = Result::with(['pigeon.parentPair.cock', 'pigeon.parentPair.hen', 'stage'])
                 ->whereHas('stage', fn ($q) => $q->where('race_id', $race->id))
                 ->get()
-                ->sortBy(fn ($r) => [$r->stage->stage_type === 'final' ? 0 : 1, $r->stage->name, $r->position])
+                ->sort(fn ($a, $b) => [$b->stage->stage_type === 'final', strnatcasecmp($a->stage->name, $b->stage->name), $a->position]
+                    <=> [$a->stage->stage_type === 'final', 0, $b->position])
                 ->values();
         }
 
-        return view('results', compact('races', 'race', 'results'));
+        // Most recent OneLoftRace sync of any stage in this race (null if never synced)
+        $lastSynced = $race?->stages()->max('olr_synced_at');
+
+        return view('results', compact('races', 'race', 'results', 'lastSynced'));
     }
 
     /** Breeding Pairs page: all youngsters plus the profile of one selected pair. */
@@ -34,12 +70,14 @@ class PageController extends Controller
     {
         $ranking = (new PairRanking)->rank();
 
+        // ?pair=ID picks a pair; without it the best-ranked pair is shown
         $selectedId = (int) $request->query('pair') ?: ($ranking[0]['pair_id'] ?? null);
 
         $selected = $selectedId
             ? Pair::with(['cock', 'hen', 'fertilityRecord', 'youngsters.results.stage.race'])->find($selectedId)
             : null;
 
+        // Find the selected pair's place and scores in the ranking
         $rankPosition = null;
         $rankRow = null;
         foreach ($ranking as $index => $row) {

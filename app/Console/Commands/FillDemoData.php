@@ -19,6 +19,7 @@ class FillDemoData extends Command
 
     protected $description = 'DEMO ONLY: fill fertility and survival with made-up data (use --reset to remove)';
 
+    // --reset removes the demo numbers; otherwise every pair gets made-up fertility and ~1 in 8 youngsters is lost
     public function handle(): int
     {
         if ($this->option('reset')) {

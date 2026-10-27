@@ -12,11 +12,12 @@
 @endsection
  
 @section('content')
+  {{-- $season is the newest season in the ranking, null when there are no pairs --}}
   <div class="section-head">
-    <h2>Season 2026 leaderboard</h2>
-    <p>Updated after every race</p>
+    <h2>Season {{ $season ?? '—' }} leaderboard</h2>
+    <p>Score 0–1: 60% race performance, 20% fertility, 20% survival</p>
   </div>
- 
+
   <table class="ledger">
     <caption>Pair leaderboard</caption>
     <thead>
@@ -25,20 +26,29 @@
         <th>Pair</th>
         <th>Season</th>
         <th>Youngsters</th>
-        <th>Score</th>
+        <th class="num">Performance</th>
+        <th class="num">Fertility</th>
+        <th class="num">Survival</th>
+        <th class="num">Score</th>
       </tr>
     </thead>
     <tbody>
-      @foreach ($ranking as $index => $pair)
+      {{-- One row per pair, already sorted best first by PairRanking --}}
+      @forelse ($ranking as $index => $pair)
         <tr>
             <td>{{ $index + 1 }}</td>
-            <td>{{ $pair['cock'] }} × {{ $pair['hen'] }}</td>
+            <td><a href="{{ route('pairs', ['pair' => $pair['pair_id']]) }}">{{ $pair['cock'] }} × {{ $pair['hen'] }}</a></td>
             <td>{{ $pair['season'] }}</td>
-            <td>{{ $pair['youngsters'] }}</td>
-            <td>{{ $pair['total'] }}</td>
+            <td>{{ $pair['youngsters'] }}@unless ($pair['enough_data']) <span title="Too few youngsters for a fair judgement">*</span>@endunless</td>
+            <td class="num">{{ $pair['performance'] }}</td>
+            <td class="num">{{ $pair['fertility'] }}</td>
+            <td class="num">{{ $pair['survival'] }}</td>
+            <td class="num pts">{{ $pair['total'] }}</td>
         </tr>
-    @endforeach
+      @empty
+        <tr><td colspan="8" class="center">No pairs have been imported yet. Run <code>php artisan import:pigeons</code>.</td></tr>
+      @endforelse
     </tbody>
   </table>
-  <p class="meta-line" style="margin-top:16px;">Points are awarded to the breeding pair based on their youngster's placement in each one-loft race.</p>
+  <p class="meta-line" style="margin-top:16px;">Performance rewards each youngster's placing (finals count 3×, hotspots 2×, trainings 1×). * = fewer than 2 youngsters, so the score says little yet.</p>
 @endsection

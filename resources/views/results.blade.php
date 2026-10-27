@@ -12,6 +12,7 @@
 @endsection
  
 @section('content')
+  {{-- The form reloads the page with ?race=ID; PageController@results picks that race (or the first one) --}}
   @if ($races->isEmpty())
     <p class="meta-line">No races have been imported yet. Run <code>php artisan import:pigeons</code>.</p>
   @else
@@ -34,7 +35,9 @@
     <div class="section-head">
       <h2>{{ $race->name }} — Results</h2>
     </div>
-    <p class="meta-line">Country: {{ $race->country }} · Season: {{ $race->season }} · Results on record: {{ $results->count() }}</p>
+    <p class="meta-line">Country: {{ $race->country }} · Season: {{ $race->season }} · Results on record: {{ $results->count() }}
+      @if ($lastSynced) · Synced from OneLoftRace {{ \Illuminate\Support\Carbon::parse($lastSynced)->diffForHumans() }} @endif
+    </p>
 
     <table class="ledger">
       <caption>Race results</caption>

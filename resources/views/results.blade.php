@@ -12,7 +12,7 @@
 @endsection
  
 @section('content')
-  {{-- The form reloads the page with ?race=ID; PageController@results picks that race (or the first one) --}}
+  {{-- The form reloads the page with ?race=ID&stage=ID; PageController@results picks that race and stage (or the first ones) --}}
   @if ($races->isEmpty())
     <p class="meta-line">No races have been imported yet. Run <code>php artisan import:pigeons</code>.</p>
   @else
@@ -28,14 +28,19 @@
             <option value="{{ $r->id }}" @selected($race && $race->id == $r->id)>{{ $r->name }}</option>
           @endforeach
         </select>
+        <select id="stage-select" name="stage" aria-label="Choose stage">
+          @foreach ($stages as $st)
+            <option value="{{ $st->id }}" @selected($stage && $stage->id == $st->id)>{{ $st->name }}</option>
+          @endforeach
+        </select>
         <button type="submit">View results</button>
       </div>
     </form>
 
     <div class="section-head">
-      <h2>{{ $race->name }} — Results</h2>
+      <h2>{{ $race->name }}@if ($stage) — {{ $stage->name }}@endif</h2>
     </div>
-    <p class="meta-line">Country: {{ $race->country }} · Season: {{ $race->season }} · Results on record: {{ $results->count() }}
+    <p class="meta-line">Country: {{ $race->country }} · Season: {{ $race->season }} · Results on record: {{ $results->count() }}@if ($stage) · Pigeons in this stage: {{ $stage->participants }}@endif
       @if ($lastSynced) · Synced from OneLoftRace {{ \Illuminate\Support\Carbon::parse($lastSynced)->diffForHumans() }} @endif
     </p>
 
@@ -43,11 +48,9 @@
       <caption>Race results</caption>
       <thead>
         <tr>
-          <th>Stage</th>
           <th class="center">Position</th>
           <th>Youngster</th>
           <th>Breeding pair</th>
-          <th class="num">Out of</th>
           <th class="num">Top %</th>
         </tr>
       </thead>
@@ -58,7 +61,6 @@
             $rankClass = $result->position == 1 ? 'gold' : ($result->position == 2 ? 'silver' : ($result->position == 3 ? 'bronze' : ''));
           @endphp
           <tr>
-            <td>{{ $result->stage->name }}</td>
             <td class="center">
               @if ($rankClass)
                 <span class="rank {{ $rankClass }}">{{ $result->position }}</span>
@@ -66,13 +68,12 @@
                 {{ $result->position }}
               @endif
             </td>
-            <td>{{ $result->pigeon->ring_number }}</td>
-            <td>{{ $pair ? $pair->cock->ring_number.' × '.$pair->hen->ring_number : '—' }}</td>
-            <td class="num">{{ $result->stage->participants }}</td>
-            <td class="num pts">{{ number_format($result->position / $result->stage->participants * 100, 1) }}%</td>
+            <td style="white-space:nowrap;">{{ $result->pigeon->ring_number }}</td>
+            <td style="white-space:nowrap;">{{ $pair ? $pair->cock->ring_number.' × '.$pair->hen->ring_number : '—' }}</td>
+            <td class="num pts">{{ number_format($result->position / $stage->participants * 100, 1) }}%</td>
           </tr>
         @empty
-          <tr><td colspan="6" class="center">No results recorded for this race yet.</td></tr>
+          <tr><td colspan="4" class="center">No results recorded for this race yet.</td></tr>
         @endforelse
       </tbody>
     </table>

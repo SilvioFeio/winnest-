@@ -42,27 +42,34 @@ class PageController extends Controller
         return view('rankings', compact('ranking', 'season'));
     }
 
-    /** Race Results page: results of one race, straight from the database. */
+    /** Race Results page: results of one stage of one race, straight from the database. */
     public function results(Request $request)
     {
         $races = Race::orderBy('name')->get();
         $race = $races->firstWhere('id', (int) $request->query('race')) ?? $races->first();
 
-        $results = collect();
-        if ($race) {
-            // Finals first, then stages in natural order ("Hot Spot 2" before "Hot Spot 10"), then by position
-            $results = Result::with(['pigeon.parentPair.cock', 'pigeon.parentPair.hen', 'stage'])
-                ->whereHas('stage', fn ($q) => $q->where('race_id', $race->id))
+        // Only stages that have results: finals first, then natural order ("Hot Spot 2" before "Hot Spot 10")
+        $stages = $race
+            ? $race->stages()->has('results')->get()
+                ->sort(fn ($a, $b) => [$b->stage_type === 'final', strnatcasecmp($a->name, $b->name)]
+                    <=> [$a->stage_type === 'final', 0])
+                ->values()
+            : collect();
+
+        // ?stage=ID picks a stage; without it (or for another race) the first stage is shown
+        $stage = $stages->firstWhere('id', (int) $request->query('stage')) ?? $stages->first();
+
+        $results = $stage
+            ? Result::with(['pigeon.parentPair.cock', 'pigeon.parentPair.hen'])
+                ->where('race_stage_id', $stage->id)
+                ->orderBy('position')
                 ->get()
-                ->sort(fn ($a, $b) => [$b->stage->stage_type === 'final', strnatcasecmp($a->stage->name, $b->stage->name), $a->position]
-                    <=> [$a->stage->stage_type === 'final', 0, $b->position])
-                ->values();
-        }
+            : collect();
 
         // Most recent OneLoftRace sync of any stage in this race (null if never synced)
         $lastSynced = $race?->stages()->max('olr_synced_at');
 
-        return view('results', compact('races', 'race', 'results', 'lastSynced'));
+        return view('results', compact('races', 'race', 'stages', 'stage', 'results', 'lastSynced'));
     }
 
     /** Breeding Pairs page: all youngsters plus the profile of one selected pair. */

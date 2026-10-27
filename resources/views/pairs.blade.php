@@ -74,7 +74,7 @@
         <tbody>
           @foreach ($selected->youngsters as $young)
             <tr>
-              <td>{{ $young->ring_number }}</td>
+              <td style="white-space:nowrap;">{{ $young->ring_number }}</td>
               <td>{{ $young->sex }}</td>
               <td>{{ $young->status }}</td>
               <td>
@@ -109,8 +109,8 @@
       <tbody>
         @foreach ($youngsters as $young)
           <tr>
-            <td>{{ $young->ring_number }}</td>
-            <td>
+            <td style="white-space:nowrap;">{{ $young->ring_number }}</td>
+            <td style="white-space:nowrap;">
               <a href="{{ route('pairs', ['pair' => $young->parent_pair_id]) }}">
                 {{ $young->parentPair->cock->ring_number }} × {{ $young->parentPair->hen->ring_number }}
               </a>

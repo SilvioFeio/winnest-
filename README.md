@@ -1,3 +1,16 @@
+# WinNest
+
+## Setup (first time and after every pull)
+
+1. Put this folder anywhere inside the Docker env's `app/` folder and start the env (`docker compose up -d`).
+2. From any terminal (macOS Terminal or Git Bash on Windows), run:
+
+   ```
+   bash path/to/winnest/setup.sh
+   ```
+
+It installs the PHP packages, creates `.env`, updates the database, imports the CSVs and fetches results from oneloftrace.live. Running it again only applies what is new. Then open http://localhost:8000.
+
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
 <p align="center">

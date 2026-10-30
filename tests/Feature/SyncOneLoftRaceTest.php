@@ -91,6 +91,17 @@ class SyncOneLoftRaceTest extends TestCase
         $this->assertNull($csvFinal->fresh()->olr_synced_at);
     }
 
+    public function test_season_must_be_a_number(): void
+    {
+        $this->seedRaceWithCsvFinal();
+
+        $this->artisan('olr:sync', ['--season' => 'abc', '--race' => 'Algarve Pigeons Golden Race 2026'])
+            ->expectsOutputToContain('--season must be a number')
+            ->assertFailed();
+
+        $this->assertNull(Race::first()->olr_season_id);
+    }
+
     public function test_dry_run_saves_nothing(): void
     {
         $this->fakeOneLoftRace();

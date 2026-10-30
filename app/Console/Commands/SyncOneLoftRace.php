@@ -84,6 +84,12 @@ class SyncOneLoftRace extends Command
     // Finds or links the stage, fetches its arrivals and saves those of pigeons we know
     private function syncFlight(OneLoftRace $olr, Race $race, array $flight, bool $running): void
     {
+        // The data comes from an outside website, so a flight without an id is skipped instead of crashing the sync
+        if (!is_int($flight['id'] ?? null)) {
+            $this->warnings[] = 'Skipped a flight without an id in the OneLoftRace data.';
+            return;
+        }
+
         $stage = RaceStage::where('olr_flight_id', $flight['id'])->first() ?? $this->linkStage($race, $flight);
         if (!$stage) {
             return;
@@ -103,17 +109,21 @@ class SyncOneLoftRace extends Command
         $this->counts['flights fetched']++;
 
         foreach ($arrivals as $arrival) {
-            $ring = Pigeon::normaliseRing($arrival['pigeon']['ring_description'] ?? '');
-            $pigeon = Pigeon::where('ring_number', $ring)->first();
+            $ring = Pigeon::normaliseRing((string) ($arrival['pigeon']['ring_description'] ?? ''));
+            $order = (int) ($arrival['arrival_order'] ?? 0);
+            if ($ring === '' || $order < 1) {
+                continue; // incomplete row from the website: nothing we can store
+            }
 
+            $pigeon = Pigeon::where('ring_number', $ring)->first();
             if (!$pigeon) {
-                $this->warnings[] = "'{$stage->name}': pigeon $ring arrived #{$arrival['arrival_order']} but is not in our database.";
+                $this->warnings[] = "'{$stage->name}': pigeon $ring arrived #$order but is not in our database.";
                 continue;
             }
 
             $result = Result::updateOrCreate(
                 ['pigeon_id' => $pigeon->id, 'race_stage_id' => $stage->id],
-                ['position' => (int) $arrival['arrival_order']]
+                ['position' => $order]
             );
             if ($result->wasRecentlyCreated) {
                 $this->counts['results created']++;
@@ -133,7 +143,7 @@ class SyncOneLoftRace extends Command
     {
         $type = $this->stageType($flight);
         if (!$type) {
-            $this->warnings[] = "Skipped flight '{$flight['name']}' ({$flight['id']}): cannot tell if it is a training, hotspot or final.";
+            $this->warnings[] = "Skipped flight '" . ($flight['name'] ?? '?') . "' ({$flight['id']}): cannot tell if it is a training, hotspot or final.";
             return null;
         }
 
@@ -156,7 +166,7 @@ class SyncOneLoftRace extends Command
         return RaceStage::create([
             'race_id' => $race->id,
             'stage_type' => $type,
-            'name' => trim($flight['name']),
+            'name' => trim((string) ($flight['name'] ?? '')) ?: "Flight {$flight['id']}",
             'participants' => max($participants, 1),
             'olr_flight_id' => $flight['id'],
         ]);

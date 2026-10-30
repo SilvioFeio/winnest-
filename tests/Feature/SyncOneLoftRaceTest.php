@@ -30,6 +30,7 @@ class SyncOneLoftRaceTest extends TestCase
                 'stopped_flights' => [
                     ['id' => 101, 'flight_type' => 'race', 'name' => 'Semi-Final', 'trigger_basketings_counter' => 1019],
                     ['id' => 102, 'flight_type' => 'race', 'name' => 'Pigeon auction', 'trigger_basketings_counter' => 0],
+                    ['flight_type' => 'race', 'name' => 'Broken row without id'], // malformed data must not crash the sync
                 ],
             ]),
             '*/flights/100/results/live*' => Http::response(['all_flight_results' => [
@@ -38,6 +39,8 @@ class SyncOneLoftRaceTest extends TestCase
             ]], $finalStatus),
             '*/flights/101/results/live*' => Http::response(['all_flight_results' => [
                 $this->arrival(5, '8349740/26 (R1)'),
+                ['pigeon' => ['ring_description' => 'NL26-8349740']], // no arrival_order
+                ['arrival_order' => 9],                              // no pigeon
             ]]),
         ]);
     }
@@ -58,6 +61,7 @@ class SyncOneLoftRaceTest extends TestCase
         $this->artisan('olr:sync', ['--season' => 3335, '--race' => 'Algarve Pigeons Golden Race 2026'])
             ->expectsOutputToContain('pigeon 26-8350003 arrived #727 but is not in our database')
             ->expectsOutputToContain("Skipped flight 'Pigeon auction'")
+            ->expectsOutputToContain('Skipped a flight without an id')
             ->assertSuccessful();
 
         // The CSV final is reused, the semi-final becomes a new hotspot, the auction is skipped

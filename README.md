@@ -2,14 +2,16 @@
 
 ## Setup (first time and after every pull)
 
-1. Put this folder anywhere inside the Docker env's `app/` folder and start the env (`docker compose up -d`).
-2. From any terminal (macOS Terminal or Git Bash on Windows), run:
+Run this from macOS Terminal or Git Bash on Windows (not PowerShell):
 
-   ```
-   bash path/to/winnest/setup.sh
-   ```
+```
+bash path/to/winnest/setup.sh
+```
 
-It installs the PHP packages, creates `.env`, updates the database, imports the CSVs and fetches results from oneloftrace.live. Running it again only applies what is new. Then open http://localhost:8000.
+It installs the PHP packages, creates `.env`, updates the database, imports the CSVs and fetches results from oneloftrace.live. Running it again only applies what is new. It picks one of two modes by itself:
+
+- **Docker** (the course environment, the reference setup): when this folder sits inside the Docker env's `app/` folder. Start the env first (`docker compose up -d`), then open http://localhost:8000.
+- **Local** (no Docker): when there is no Docker env above this folder, or with `bash setup.sh --local`. Needs PHP 8.2+ (with `pdo_sqlite` and `openssl` enabled) and Composer, and stores the data in `database/database.sqlite`. Start the site with `php artisan serve` and open http://127.0.0.1:8000.
 
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 

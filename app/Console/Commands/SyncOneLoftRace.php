@@ -29,19 +29,29 @@ class SyncOneLoftRace extends Command
     /** What happened, per kind. */
     private array $counts = ['flights fetched' => 0, 'stages linked' => 0, 'stages created' => 0, 'results created' => 0, 'results updated' => 0];
 
+    /** Our pigeons' ids keyed by ring number, loaded once instead of one query per arrival. */
+    private array $pigeonIds = [];
+
     // Optionally links a season to a race, then syncs every flight of every linked race in one transaction
     public function handle(OneLoftRace $olr): int
     {
-        DB::beginTransaction();
+        $season = $this->option('season');
+        if ($season !== null && !ctype_digit($season)) {
+            $this->error('--season must be a number, for example --season=3335 (from the URL ?season=...).');
+            return self::FAILURE;
+        }
 
-        if ($this->option('season')) {
+        DB::beginTransaction();
+        $this->pigeonIds = Pigeon::pluck('id', 'ring_number')->all();
+
+        if ($season !== null) {
             $race = Race::where('name', $this->option('race'))->first();
             if (!$race) {
                 $this->error("Race '{$this->option('race')}' not found. Use --race=\"exact race name\".");
                 DB::rollBack();
                 return self::FAILURE;
             }
-            $race->update(['olr_season_id' => (int) $this->option('season')]);
+            $race->update(['olr_season_id' => (int) $season]);
         }
 
         $races = Race::whereNotNull('olr_season_id')->get();
@@ -115,14 +125,14 @@ class SyncOneLoftRace extends Command
                 continue; // incomplete row from the website: nothing we can store
             }
 
-            $pigeon = Pigeon::where('ring_number', $ring)->first();
-            if (!$pigeon) {
+            $pigeonId = $this->pigeonIds[$ring] ?? null;
+            if (!$pigeonId) {
                 $this->warnings[] = "'{$stage->name}': pigeon $ring arrived #$order but is not in our database.";
                 continue;
             }
 
             $result = Result::updateOrCreate(
-                ['pigeon_id' => $pigeon->id, 'race_stage_id' => $stage->id],
+                ['pigeon_id' => $pigeonId, 'race_stage_id' => $stage->id],
                 ['position' => $order]
             );
             if ($result->wasRecentlyCreated) {
